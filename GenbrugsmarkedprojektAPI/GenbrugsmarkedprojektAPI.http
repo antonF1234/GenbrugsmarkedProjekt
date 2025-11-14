@@ -1,0 +1,6 @@
+@GenbrugsmarkedprojektAPI_HostAddress = http://localhost:5084
+
+GET {{GenbrugsmarkedprojektAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
