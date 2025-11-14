@@ -1,4 +1,5 @@
 namespace GenbrugsmarkedProjekt.Models;
+using MongoDB.Bson.Serialization.Attributes;
 
 public class Annonce
 {
@@ -14,8 +15,9 @@ public class Annonce
     public string FotoUrl { get; set; } = "";
 
     // Status & flow 
-    public string Status { get; set; } = "Active";      
+    public string Status { get; set; } = "Aktiv"; 
     public DateTime Dato { get; set; } = DateTime.Now;
+    public string? koeber { get; set; } = "";
 
     // Bruger 
     public int BrugerId { get; set; }
