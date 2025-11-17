@@ -1,4 +1,10 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@using GenbrugsmarkedProjekt.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@inject AuthenticationStateProvider AuthStateProvider
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">GenbrugsmarkedProjekt</a>
     </div>
@@ -10,20 +16,58 @@
     <nav class="nav flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Hjem
             </NavLink>
         </div>
 
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
+                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Tæller
             </NavLink>
         </div>
 
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
+                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Vejr
             </NavLink>
         </div>
+
+        <hr/>
+
+        <AuthorizeView>
+            <Authorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="profil">
+                        <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> Velkommen, @context.User.Identity?.Name!
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <button class="nav-link btn btn-link" @onclick="LogUd">
+                        <span class="bi bi-box-arrow-right" aria-hidden="true"></span> Log ud
+                    </button>
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="logind">
+                        <span class="bi bi-box-arrow-in-right" aria-hidden="true"></span> Log ind
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="opretbruger">
+                        <span class="bi bi-person-plus-fill" aria-hidden="true"></span> Opret bruger
+                    </NavLink>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
     </nav>
 </div>
+
+@code {
+    private async Task LogUd()
+    {
+        await JS.InvokeVoidAsync("localStorage.removeItem", "bruger");
+        ((AutentificeringsTjeneste)AuthStateProvider).MeddelBrugerLoggetUd();
+        Nav.NavigateTo("/", forceLoad: true);
+    }
+}

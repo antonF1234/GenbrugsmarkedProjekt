@@ -4,72 +4,63 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GenbrugsmarkedprojektAPI.Controllers;
 
-public class BrugereController : Controller
+[ApiController]
+[Route("api/[controller]")]
+public class BrugereController : ControllerBase
 {
-    
-    private  readonly BrugereRepo _repo;
+    private readonly BrugereRepo _repo;
 
     public BrugereController()
     {
         _repo = new BrugereRepo();
     }
 
-    public IActionResult Index()
+    [HttpGet]
+    public IActionResult GetAll()
     {
         var brugere = _repo.GetAll();
-        return View(brugere);
+        return Ok(brugere);
     }
 
-    public IActionResult Detaljer(string id)
-    {
-        var brugere = _repo.GetById(id);
-        if (brugere == null) return NotFound();
-        
-        return View(brugere);
-    }
-
-    public IActionResult Opret()
-    {
-        return View();
-    }
-    
-    [HttpPost]
-    public IActionResult Create(Brugere bruger)
-    {
-        if (!ModelState.IsValid)
-            return View(bruger);
-
-        _repo.Create(bruger);
-        return RedirectToAction("Index");
-    }
-    
-    public IActionResult Edit(string id)
+    [HttpGet("{id}")]
+    public IActionResult GetById(string id)
     {
         var bruger = _repo.GetById(id);
         if (bruger == null) return NotFound();
-
-        return View(bruger);
+        
+        return Ok(bruger);
     }
+
     [HttpPost]
-    public IActionResult Edit(string id, Brugere bruger)
+    public IActionResult Create([FromBody] Brugere bruger)
     {
         if (!ModelState.IsValid)
-            return View(bruger);
+            return BadRequest(ModelState);
+
+        var created = _repo.Create(bruger);
+        return Ok(created);
+    }
+
+    [HttpPut("{id}")]
+    public IActionResult Update(string id, [FromBody] Brugere bruger)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var existing = _repo.GetById(id);
+        if (existing == null) return NotFound();
 
         _repo.Update(id, bruger);
-        return RedirectToAction("Index");
+        return Ok(bruger);
     }
+
+    [HttpDelete("{id}")]
     public IActionResult Delete(string id)
     {
         var bruger = _repo.GetById(id);
         if (bruger == null) return NotFound();
 
-        return View(bruger);
-    }
-    [HttpPost, ActionName("Delete")]
-    public IActionResult DeleteConfirmed(string id)
-    {
         _repo.Delete(id);
-        return RedirectToAction("Index");
+        return NoContent();
     }
-}    
+}

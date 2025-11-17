@@ -5,7 +5,7 @@ namespace GenbrugsmarkedProjekt.Repositories;
 
 public class BrugereRepo
 {
-    private readonly IMongoCollection<Brugere> _brugere;
+    private readonly IMongoCollection<Brugere> _brugere; // Brugere collection i databasen og Modellen brugere
 
     public BrugereRepo()
     {
@@ -40,6 +40,12 @@ public class BrugereRepo
         return opdateretbrugere;
     }
     
+    // Find bruger via email
+    public Brugere? GetByEmail(string email)
+    {
+        return _brugere.Find(b => b.Email == email).FirstOrDefault();
+    }
+
     //Slet brugere
     public void Delete(string id)
     {

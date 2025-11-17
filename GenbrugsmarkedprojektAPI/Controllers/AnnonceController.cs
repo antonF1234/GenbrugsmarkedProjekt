@@ -1,74 +1,66 @@
 using GenbrugsmarkedProjekt.Models;            
 using GenbrugsmarkedProjekt.Repositories;     
 using Microsoft.AspNetCore.Mvc;
+
 namespace GenbrugsmarkedprojektAPI.Controllers;
 
-public class AnnonceController : Controller
+[ApiController]
+[Route("api/[controller]")]
+public class AnnonceController : ControllerBase
 {
-    
-    private  readonly AnnonceRepo _repo;
+    private readonly AnnonceRepo _repo;
 
     public AnnonceController()
     {
         _repo = new AnnonceRepo();
     }
 
-    public IActionResult Index()
+    [HttpGet]
+    public IActionResult GetAll()
     {
         var annonce = _repo.GetAll();
-        return View(annonce);
+        return Ok(annonce);
     }
 
-    public IActionResult Detaljer(string id)
+    [HttpGet("{id}")]
+    public IActionResult GetById(string id)
     {
         var annonce = _repo.GetById(id);
         if (annonce == null) return NotFound();
         
-        return View(annonce);
+        return Ok(annonce);
     }
 
-    public IActionResult Opret()
-    {
-        return View();
-    }
-    
     [HttpPost]
-    public IActionResult Create(Annonce annonce)
+    public IActionResult Create([FromBody] Annonce annonce)
     {
         if (!ModelState.IsValid)
-            return View(annonce);
+            return BadRequest(ModelState);
 
-        _repo.Create(annonce);
-        return RedirectToAction("Index");
+        var created = _repo.Create(annonce);
+        return Ok(created);
     }
-    
-    public IActionResult Edit(string id)
-    {
-        var annonce = _repo.GetById(id);
-        if (annonce == null) return NotFound();
 
-        return View(annonce);
-    }
-    [HttpPost]
-    public IActionResult Edit(string id, Annonce annonce)
+    [HttpPut("{id}")]
+    public IActionResult Update(string id, [FromBody] Annonce annonce)
     {
         if (!ModelState.IsValid)
-            return View(annonce);
+            return BadRequest(ModelState);
+
+        var existing = _repo.GetById(id);
+        if (existing == null) return NotFound();
 
         _repo.Update(id, annonce);
-        return RedirectToAction("Index");
+        return Ok(annonce);
     }
+
+    [HttpDelete("{id}")]
     public IActionResult Delete(string id)
     {
         var annonce = _repo.GetById(id);
         if (annonce == null) return NotFound();
 
-        return View(annonce);
-    }
-    [HttpPost, ActionName("Delete")]
-    public IActionResult DeleteConfirmed(string id)
-    {
         _repo.Delete(id);
-        return RedirectToAction("Index");
+        return NoContent();
     }
-} 
+}

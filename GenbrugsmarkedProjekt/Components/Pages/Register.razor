@@ -1,0 +1,120 @@
+﻿@page "/opretbruger"
+@using System.Text.Json
+@using GenbrugsmarkedProjekt.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@inject HttpClient Http
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Opret bruger</PageTitle>
+<h3>Opret bruger</h3>
+
+@if (!string.IsNullOrEmpty(error))
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+<EditForm FormName="opretbruger-form" Model="model" OnValidSubmit="HaandterOpretBruger">
+    <DataAnnotationsValidator/>
+    <div class="mb-3">
+        <label class="form-label">Navn</label>
+        <InputText class="form-control" @bind-Value="model.Navn"/>
+        <ValidationMessage For="@(() => model.Navn)"/>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Email</label>
+        <InputText class="form-control" @bind-Value="model.Email"/>
+        <ValidationMessage For="@(() => model.Email)"/>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Password</label>
+        <InputText type="password" class="form-control" @bind-Value="model.Password"/>
+        <ValidationMessage For="@(() => model.Password)"/>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Bekræft password</label>
+        <InputText type="password" class="form-control" @bind-Value="model.ConfirmPassword"/>
+        <ValidationMessage For="@(() => model.ConfirmPassword)"/>
+    </div>
+    <button class="btn btn-primary" type="submit" disabled="@loading">
+        @if (loading) { <span>Opretter...</span> } else { <span>Opret</span> }
+    </button>
+    <a class="btn btn-link" href="/logind">Allerede bruger? Log ind</a>
+</EditForm>
+
+@code {
+    private OpretBrugerModel model = new();
+    private string? error;
+    private bool loading;
+
+    private async Task HaandterOpretBruger()
+    {
+        error = null;
+
+        if (model.Password != model.ConfirmPassword)
+        {
+            error = "Passwords matcher ikke.";
+            return;
+        }
+
+        loading = true;
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync("/api/autentificering/opretbruger", new
+            {
+                email = model.Email,
+                navn = model.Navn,
+                password = model.Password
+            });
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var responseContent = await response.Content.ReadAsStringAsync();
+                error = string.IsNullOrWhiteSpace(responseContent) ? "Oprettelse fejlede." : responseContent;
+                return;
+            }
+
+            var bruger = await response.Content.ReadFromJsonAsync<BrugerSession>(); // Deserialize to BrugerSession
+            if (bruger == null)
+            {
+                error = "Oprettelse fejlede: Kunne ikke hente brugerdata.";
+                return;
+            }
+
+            // Gem direkte og gå til forsiden
+            var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+            await JS.InvokeVoidAsync("localStorage.setItem", "bruger", JsonSerializer.Serialize(bruger, options));
+
+            // Notificer AuthStateProvider om logind
+            ((AutentificeringsTjeneste)AuthStateProvider).MeddelBrugerLoggetInd(bruger);
+
+            // Naviger til forsiden
+            Nav.NavigateTo("/", forceLoad: true); // Force reload to update UI
+        }
+        catch (Exception ex)
+        {
+            error = $"Der opstod en fejl: {ex.Message}";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    public class OpretBrugerModel
+    {
+        [System.ComponentModel.DataAnnotations.Required]
+        public string Navn { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required, System.ComponentModel.DataAnnotations.EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required, System.ComponentModel.DataAnnotations.MinLength(6)]
+        public string Password { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required]
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+}

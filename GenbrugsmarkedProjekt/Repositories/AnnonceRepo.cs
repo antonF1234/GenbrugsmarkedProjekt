@@ -33,9 +33,9 @@ public class AnnonceRepo
         return annonce;
     }
     //opdatere
-    public void Update(string id, Annonce Opdaterannonce)
+    public void Update(string id, Annonce opdaterannonce)
     {
-        _annonce.ReplaceOne(a => a.Id == id, Opdaterannonce);
+        _annonce.ReplaceOne(a => a.Id == id, opdaterannonce);
     }
     
     //slet 

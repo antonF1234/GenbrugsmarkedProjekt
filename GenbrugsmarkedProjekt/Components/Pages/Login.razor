@@ -1,0 +1,97 @@
+﻿@page "/logind"
+@using System.Text.Json
+@using GenbrugsmarkedProjekt.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@inject HttpClient Http
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Log ind</PageTitle>
+
+<h3>Log ind</h3>
+
+@if (!string.IsNullOrEmpty(error))
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+<EditForm FormName="logind-form" Model="model" OnValidSubmit="HaandterLogInd">
+    <DataAnnotationsValidator/>
+    <div class="mb-3">
+        <label class="form-label">Email</label>
+        <InputText class="form-control" @bind-Value="model.Email"/>
+        <ValidationMessage For="@(() => model.Email)"/>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Password</label>
+        <InputText type="password" class="form-control" @bind-Value="model.Password"/>
+        <ValidationMessage For="@(() => model.Password)"/>
+    </div>
+    <button class="btn btn-primary" type="submit" disabled="@loading">
+        @if (loading) { <span>Logger ind...</span> } else { <span>Log ind</span> }
+    </button>
+    <a class="btn btn-link" href="/opretbruger">Opret bruger</a>
+</EditForm>
+
+@code {
+    private LogIndModel model = new();
+    private string? error;
+    private bool loading;
+
+    private async Task HaandterLogInd()
+    {
+        error = null;
+        loading = true;
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync("/api/autentificering/logind", new
+            {
+                email = model.Email,
+                password = model.Password
+            });
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var responseContent = await response.Content.ReadAsStringAsync();
+                error = string.IsNullOrWhiteSpace(responseContent) ? "Login fejlede." : responseContent;
+                return;
+            }
+
+            var bruger = await response.Content.ReadFromJsonAsync<BrugerSession>(); // Deserialize to BrugerSession
+            if (bruger == null)
+            {
+                error = "Login fejlede: Kunne ikke hente brugerdata.";
+                return;
+            }
+
+            // Gem bruger i localStorage
+            var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+            await JS.InvokeVoidAsync("localStorage.setItem", "bruger", JsonSerializer.Serialize(bruger, options));
+
+            // Notificer AuthStateProvider om logind
+            ((AutentificeringsTjeneste)AuthStateProvider).MeddelBrugerLoggetInd(bruger);
+
+            // Naviger til forsiden
+            Nav.NavigateTo("/", forceLoad: true); // Force reload to update UI
+        }
+        catch (Exception ex)
+        {
+            error = $"Der opstod en fejl: {ex.Message}";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    public class LogIndModel
+    {
+        [System.ComponentModel.DataAnnotations.Required, System.ComponentModel.DataAnnotations.EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required]
+        public string Password { get; set; } = string.Empty;
+    }
+}

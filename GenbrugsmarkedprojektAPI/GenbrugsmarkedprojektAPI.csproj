@@ -7,11 +7,14 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.8"/>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.8" />
+        <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\GenbrugsmarkedProjekt\GenbrugsmarkedProjekt.csproj" />
     </ItemGroup>
+
+    <!-- Removed incorrect ProjectReference to GenbrugsmarkedProjekt -->
 
 </Project>
