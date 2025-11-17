@@ -27,21 +27,21 @@ public class BrugereRepo
     }
     
     //Opret brugere
-    public Brugere Opret(Brugere brugere)
+    public Brugere Create(Brugere brugere)
     {
         _brugere.InsertOne(brugere);
         return brugere;
     }
     
     //Opdater brugere
-    public Brugere opdater(string id, Brugere opdateretbrugere)
+    public Brugere Update(string id, Brugere opdateretbrugere)
     {
         _brugere.ReplaceOne(b =>b.Id == id, opdateretbrugere);
         return opdateretbrugere;
     }
     
     //Slet brugere
-    public void Slet(string id)
+    public void Delete(string id)
     {
         _brugere.DeleteOne(b => b.Id == id);
     }

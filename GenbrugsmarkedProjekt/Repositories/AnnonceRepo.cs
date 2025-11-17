@@ -27,19 +27,19 @@ public class AnnonceRepo
     }
     
     //opret
-    public Annonce Opret(Annonce annonce)
+    public Annonce Create(Annonce annonce)
     {
         _annonce.InsertOne(annonce);
         return annonce;
     }
     //opdatere
-    public void opdater(string id, Annonce Opdaterannonce)
+    public void Update(string id, Annonce Opdaterannonce)
     {
         _annonce.ReplaceOne(a => a.Id == id, Opdaterannonce);
     }
     
     //slet 
-    public void Slet(string id)
+    public void Delete(string id)
     {
         _annonce.DeleteOne(a => a.Id == id);
     }

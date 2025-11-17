@@ -1,12 +1,13 @@
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
-using MongoDB.Driver;
 
 namespace GenbrugsmarkedProjekt.Models;
 
 public class Lokalitet
 {
-    [BsonId] public ObjectId Id { get; set; };
+    [BsonId]
+    public ObjectId Id { get; set; }
     
-    public string Lokalitet { get; set; } = "EAAA";     
+    public string LokalitetNavn { get; set; } = "EAAA";     
     public string? Lokale { get; set; }
 }
