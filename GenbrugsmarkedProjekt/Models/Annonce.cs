@@ -1,9 +1,14 @@
+using MongoDB.Bson;
+
 namespace GenbrugsmarkedProjekt.Models;
 using MongoDB.Bson.Serialization.Attributes;
 
 public class Annonce
-{
-    [BsonId] public ObjectId Id { get; set; }           
+{ 
+    [BsonId]
+    [BsonRepresentation(BsonType.ObjectId)]
+    public string Id { get; set; }
+    
     public int AnnonceId { get; set; }                      
 
     // Annonce info 

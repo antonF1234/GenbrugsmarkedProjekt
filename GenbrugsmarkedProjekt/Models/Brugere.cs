@@ -1,8 +1,15 @@
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+    
 namespace GenbrugsmarkedProjekt.Models;
 
 public class Brugere
 {
-    [BsonId] public ObjectId Id { get; set; }
+    [BsonId]
+    [BsonRepresentation(BsonType.ObjectId)]
+    
+    public string Id { get; set; }
+    
     public int BrugerId { get; set; }
     public string Navn { get; set; } = "";
     public string Email { get; set; } = "";
