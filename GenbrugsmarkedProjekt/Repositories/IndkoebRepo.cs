@@ -45,4 +45,8 @@ public class IndkoebRepo
     {
         _indkoeb.DeleteOne(i => i.Id == id);
     }
+    public List<Indkoeb> GetByBuyer(string køberId)
+    {
+        return _indkoeb.Find(i => i.KoeberId == køberId).ToList();
+    }
 }

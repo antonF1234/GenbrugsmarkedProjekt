@@ -14,7 +14,12 @@ public class AnnonceController : ControllerBase
     {
         _repo = new AnnonceRepo();
     }
-
+    [HttpGet("active")]
+    public IActionResult GetActive()
+    {
+        return Ok(_repo.GetActive());
+    }
+    
     [HttpGet]
     public IActionResult GetAll()
     {
@@ -63,4 +68,22 @@ public class AnnonceController : ControllerBase
         _repo.Delete(id);
         return NoContent();
     }
+    //filtrer
+    [HttpGet("filter")]
+    public IActionResult Filter([FromQuery] decimal? minPris, [FromQuery] decimal? maxPris, [FromQuery] string? stand, [FromQuery] string? str)
+    {
+        return Ok(_repo.Filter(minPris, maxPris, stand, str));
+    }
+    [HttpPost("{id}/request")]
+    public IActionResult RequestPurchase(string id, [FromQuery] string køberId)
+    {
+        var annonce = _repo.GetById(id);
+        if (annonce == null) return NotFound();
+
+        _repo.RequestPurchase(id, køberId);
+        return Ok();
+    }
+
+    
+
 }

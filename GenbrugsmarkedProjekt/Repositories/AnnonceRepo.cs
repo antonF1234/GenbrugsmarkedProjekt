@@ -14,6 +14,11 @@ public class AnnonceRepo
         _annonce = database.GetCollection<Annonce>("annonce");
     }
 
+    public List<Annonce> GetActive()
+    {
+        return _annonce.Find(a => a.Status == "Aktiv").ToList();
+    }
+
     // GET, vores annoncer
     public List<Annonce> GetAll()
     {
@@ -42,5 +47,47 @@ public class AnnonceRepo
     public void Delete(string id)
     {
         _annonce.DeleteOne(a => a.Id == id);
+    }
+
+    //filtrer
+    public List<Annonce> Filter(decimal? minPris, decimal? maxPris, string? stand, string? str)
+    {
+        var filter = Builders<Annonce>.Filter.Empty;
+        
+        if (minPris.HasValue)
+            filter &= Builders<Annonce>.Filter.Gte(a => a.Pris, minPris.Value);
+        
+        if (maxPris.HasValue)
+            filter &= Builders<Annonce>.Filter.Gte(a => a.Pris, maxPris.Value);
+        
+        if (!string.IsNullOrEmpty(stand))
+            filter &= Builders<Annonce>.Filter.Eq(a => a.Stand, stand);
+        
+        if (!string.IsNullOrEmpty(str))
+            filter &= Builders<Annonce>.Filter.Eq(a => a.Str, str);
+        
+        return _annonce.Find(filter).ToList();
+    }
+
+    //søg
+    public List<Annonce> Search(string text)
+    {
+        return _annonce.Find(a =>
+            a.Titel.ToLower().Contains(text.ToLower()) ||
+            a.Beskrivelse.ToLower().Contains(text.ToLower())
+        ).ToList();
+    }
+    
+    //anmod om køb
+    public void RequestPurchase(string annonceId, string køberId)
+    {
+        var annonce = GetById(annonceId);
+        if (annonce == null) return;
+        
+        annonce.Status = "Reserveret";
+        annonce.koeber = køberId;
+
+        Update(annonceId, annonce);
+        
     }
 }
