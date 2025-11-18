@@ -8,7 +8,7 @@ public class Brugere
     [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]
     
-    public string Id { get; set; }
+    public required string Id { get; set; }
     
     public int BrugerId { get; set; }
     public string Navn { get; set; } = "";

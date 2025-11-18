@@ -3,10 +3,10 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace GenbrugsmarkedProjekt.Models;
 
-public class Lokalitet
+public class Lokaliteter
 {
     [BsonId]
-    public ObjectId Id { get; set; }
+    public required string Id { get; set; }
     
     public string LokalitetNavn { get; set; } = "EAAA";     
     public string? Lokale { get; set; }

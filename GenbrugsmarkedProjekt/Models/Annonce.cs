@@ -7,7 +7,7 @@ public class Annonce
 { 
     [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]
-    public string Id { get; set; }
+    public required string Id { get; set; }
     
     public int AnnonceId { get; set; }                      
 
