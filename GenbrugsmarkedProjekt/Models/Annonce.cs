@@ -22,10 +22,10 @@ public class Annonce
     // Status & flow 
     public string Status { get; set; } = "Aktiv"; 
     public DateTime Dato { get; set; } = DateTime.Now;
-    public string? koeber { get; set; } = "";
+    public string? Koeber { get; set; } = "";
 
     // Bruger 
-    public int BrugerId { get; set; }
+    public int? BrugerId { get; set; }
     public string BrugerNavn { get; set; } = "";
     public string BrugerEmail { get; set; } = "";
     

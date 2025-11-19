@@ -38,6 +38,7 @@ public class AutentificeringController : ControllerBase
             Email = request.Email.Trim(),
             Navn = request.Navn.Trim(),
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+            BrugerId = _brugereRepo.GetNextBrugerId(),
             Id = null
         };
 

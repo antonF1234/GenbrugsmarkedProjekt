@@ -31,6 +31,18 @@ public class BrugereController : ControllerBase
         return Ok(bruger);
     }
 
+    [HttpGet("by-email")]
+    public IActionResult GetByEmail([FromQuery] string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return BadRequest(new { message = "Email is required." });
+
+        var bruger = _repo.GetByEmail(email.Trim());
+        if (bruger == null) return NotFound();
+
+        return Ok(bruger);
+    }
+
     [HttpPost]
     public IActionResult Create([FromBody] Brugere bruger)
     {

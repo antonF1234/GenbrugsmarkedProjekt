@@ -13,5 +13,5 @@ public class Brugere
     public int BrugerId { get; set; }
     public string Navn { get; set; } = "";
     public string Email { get; set; } = "";
-    public string PasswordHash { get; set; } = "";      // Vi Bruger BCrypt
+    public string PasswordHash { get; set; } = "";      // Vi Bruger BCrypt til at kryptere adgangskoden.
 }
