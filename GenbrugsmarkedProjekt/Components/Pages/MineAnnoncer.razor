@@ -1,7 +1,7 @@
 ﻿@page "/mineannoncer"
 @using System.Security.Claims
 @using GenbrugsmarkedProjekt.Models
-@using MongoDB.Bson
+@using GenbrugsmarkedProjekt.Repositories
 @using Microsoft.AspNetCore.Components.Authorization
 @inject HttpClient http
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -63,7 +63,7 @@
 }
 
 @code {
-    private Annonce nyAnnonce = default!;
+    private Annonce nyAnnonce = new();
     private string? besked;
 
     protected override async Task OnInitializedAsync()
@@ -75,9 +75,8 @@
     {
         nyAnnonce = new Annonce
         {
-            Id = ObjectId.GenerateNewId().ToString(),
-            Dato = DateTime.Now,
-            Status = "Aktiv"
+            Status = "Aktiv",
+            Dato = DateTime.Now
         };
 
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
@@ -85,25 +84,27 @@
 
         if (user.Identity?.IsAuthenticated == true)
         {
-            nyAnnonce.BrugerNavn = user.Identity.Name ?? "";
-            nyAnnonce.BrugerEmail = user.FindFirst(ClaimTypes.Email)?.Value ?? "";
+            var email = user.FindFirst(ClaimTypes.Email)?.Value;
 
-            // Resolve BrugerId via API using the authenticated user's email
-            if (!string.IsNullOrWhiteSpace(nyAnnonce.BrugerEmail))
+            if (!string.IsNullOrWhiteSpace(email))
             {
                 try
                 {
-                    var bruger = await http.GetFromJsonAsync<Brugere>($"api/Brugere/by-email?email={Uri.EscapeDataString(nyAnnonce.BrugerEmail)}");
-                    nyAnnonce.BrugerId = bruger?.BrugerId ?? 0;
+                    // Hent MongoDB brugerobjekt via email
+                    var bruger = await http.GetFromJsonAsync<Brugere>(
+                        $"api/Brugere/by-email?email={Uri.EscapeDataString(email)}"
+                    );
+
+                    if (bruger != null)
+                    {
+                        nyAnnonce.BrugerId = bruger.Id; // Mongo Id
+                    }
                 }
                 catch
                 {
-                    nyAnnonce.BrugerId = 0;
+                    // Hvis API fejler, sæt ingenting
+                    nyAnnonce.BrugerId = "";
                 }
-            }
-            else
-            {
-                nyAnnonce.BrugerId = 0;
             }
         }
     }

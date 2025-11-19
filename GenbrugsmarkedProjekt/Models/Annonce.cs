@@ -1,36 +1,35 @@
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+using System.Text.Json.Serialization;
 
 namespace GenbrugsmarkedProjekt.Models;
-using MongoDB.Bson.Serialization.Attributes;
 
 public class Annonce
-{ 
+{
     [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]
-    public required string Id { get; set; }
-    
-    public int AnnonceId { get; set; }                      
+    [JsonPropertyName("id")]
+    public string? Id { get; set; }
 
-    // Annonce info 
+    public string KoeberIDD { get; set; } = "";
     public string Titel { get; set; } = "";
     public string Beskrivelse { get; set; } = "";
     public decimal Pris { get; set; }
-    public string Stand { get; set; } = "God";      
-    public string Str { get; set; } = "";              
+    public string Stand { get; set; } = "God";
+    public string Str { get; set; } = "";
     public string FotoUrl { get; set; } = "";
 
-    // Status & flow 
-    public string Status { get; set; } = "Aktiv"; 
+    public string Status { get; set; } = "Aktiv";
     public DateTime Dato { get; set; } = DateTime.Now;
-    public string? Koeber { get; set; } = "";
 
-    // Bruger 
-    public int? BrugerId { get; set; }
-    public string BrugerNavn { get; set; } = "";
-    public string BrugerEmail { get; set; } = "";
-    
+    [BsonRepresentation(BsonType.ObjectId)]
+    [JsonPropertyName("koeberId")]
+    public string? KoeberId { get; set; }
 
-    // Lokation 
-    public string Lokalitet { get; set; } = "EAAA";     
+    [BsonRepresentation(BsonType.ObjectId)]
+    [JsonPropertyName("brugerId")]
+    public string BrugerId { get; set; } = "";
+
+    public string Lokalitet { get; set; } = "EAAA";
     public string? Lokale { get; set; }
 }

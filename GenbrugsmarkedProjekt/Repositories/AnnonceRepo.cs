@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using GenbrugsmarkedProjekt.Models;
+﻿using GenbrugsmarkedProjekt.Models;
 using MongoDB.Driver;
 
 namespace GenbrugsmarkedProjekt.Repositories;
@@ -7,6 +6,7 @@ namespace GenbrugsmarkedProjekt.Repositories;
 public class AnnonceRepo
 {
     private readonly IMongoCollection<Annonce> _annonce;
+
     public AnnonceRepo()
     {
         var client = new MongoClient("mongodb://localhost:27017");
@@ -19,75 +19,69 @@ public class AnnonceRepo
         return _annonce.Find(a => a.Status == "Aktiv").ToList();
     }
 
-    // GET, vores annoncer
     public List<Annonce> GetAll()
     {
-        return _annonce.Find (a => true).ToList();
+        return _annonce.Find(a => true).ToList();
     }
-    
-    // en annonce
-    public Annonce GetById(string id)
+
+    public Annonce? GetById(string id)
     {
         return _annonce.Find(a => a.Id == id).FirstOrDefault();
     }
-    
-    //opret
+
     public Annonce Create(Annonce annonce)
     {
         _annonce.InsertOne(annonce);
         return annonce;
     }
-    //opdatere
-    public void Update(string id, Annonce opdaterannonce)
+
+    public void Update(string id, Annonce updated)
     {
-        _annonce.ReplaceOne(a => a.Id == id, opdaterannonce);
+        _annonce.ReplaceOne(a => a.Id == id, updated);
     }
-    
-    //slet 
+
     public void Delete(string id)
     {
         _annonce.DeleteOne(a => a.Id == id);
     }
 
-    //filtrer
     public List<Annonce> Filter(decimal? minPris, decimal? maxPris, string? stand, string? str)
     {
         var filter = Builders<Annonce>.Filter.Empty;
-        
+
         if (minPris.HasValue)
             filter &= Builders<Annonce>.Filter.Gte(a => a.Pris, minPris.Value);
-        
+
         if (maxPris.HasValue)
-            filter &= Builders<Annonce>.Filter.Gte(a => a.Pris, maxPris.Value);
-        
+            filter &= Builders<Annonce>.Filter.Lte(a => a.Pris, maxPris.Value);
+
         if (!string.IsNullOrEmpty(stand))
             filter &= Builders<Annonce>.Filter.Eq(a => a.Stand, stand);
-        
+
         if (!string.IsNullOrEmpty(str))
             filter &= Builders<Annonce>.Filter.Eq(a => a.Str, str);
-        
+
         return _annonce.Find(filter).ToList();
     }
 
-    //søg
     public List<Annonce> Search(string text)
     {
+        text = text.ToLower();
+
         return _annonce.Find(a =>
-            a.Titel.ToLower().Contains(text.ToLower()) ||
-            a.Beskrivelse.ToLower().Contains(text.ToLower())
+            a.Titel.ToLower().Contains(text) ||
+            a.Beskrivelse.ToLower().Contains(text)
         ).ToList();
     }
-    
-    //anmod om køb
+
     public void RequestPurchase(string annonceId, string køberId)
     {
         var annonce = GetById(annonceId);
         if (annonce == null) return;
-        
+
         annonce.Status = "Reserveret";
-        annonce.koeber = køberId;
+        annonce.KoeberId = køberId;
 
         Update(annonceId, annonce);
-        
     }
 }
