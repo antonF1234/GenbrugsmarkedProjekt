@@ -9,8 +9,8 @@ public class BrugereRepo
 
     public BrugereRepo()
     {
-    var client = new MongoClient("mongodb://localhost:27017");
-    var database = client.GetDatabase("Genbrugsmarked");
+        var client = new MongoClient("mongodb://localhost:27017");
+        var database = client.GetDatabase("Genbrugsmarked");
     _brugere = database.GetCollection<Brugere>("brugere");
     }
     

@@ -12,5 +12,6 @@ public class Indkoeb
     public string KoeberId { get; set; }
     public string annonceId { get; set; }
     
+    public string status { get; set; } = "Afventer";
     public DateTime KøbsDato { get; set; } = DateTime.UtcNow;
 }
