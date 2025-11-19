@@ -10,8 +10,7 @@ public class Annonce
     [BsonRepresentation(BsonType.ObjectId)]
     [JsonPropertyName("id")]
     public string? Id { get; set; }
-
-    public string KoeberIDD { get; set; } = "";
+    
     public string Titel { get; set; } = "";
     public string Beskrivelse { get; set; } = "";
     public decimal Pris { get; set; }

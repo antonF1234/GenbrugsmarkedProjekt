@@ -13,7 +13,8 @@ public class AnnonceRepo
         var database = client.GetDatabase("Genbrugsmarked");
         _annonce = database.GetCollection<Annonce>("annonce");
     }
-
+    
+    
     public List<Annonce> GetActive()
     {
         return _annonce.Find(a => a.Status == "Aktiv").ToList();
@@ -23,7 +24,7 @@ public class AnnonceRepo
     {
         return _annonce.Find(a => true).ToList();
     }
-
+    
     public Annonce? GetById(string id)
     {
         return _annonce.Find(a => a.Id == id).FirstOrDefault();

@@ -1,6 +1,109 @@
-﻿@page "/Marked"
+﻿@page "/marked"
+@using GenbrugsmarkedProjekt.Models
+@inject HttpClient http
+@inject NavigationManager nav
+
 <h3>Marked</h3>
 
+<div class="row mb-3">
+    <div class="col-4">
+        <input class="form-control" placeholder="Søg..." @bind="searchText" @bind:event="oninput" />
+    </div>
+    <div class="col-4">
+        <input type="number" class="form-control" placeholder="Max pris" @bind="maxPris" />
+    </div>
+    <div class="col-2">
+        <button class="btn btn-primary" @onclick="FilterAnnoncer">Filtrer</button>
+    </div>
+</div>
+
+@if (annoncer == null)
+{
+    <p>Henter annoncer...</p>
+}
+else if (annoncer.Count == 0)
+{
+    <p>Ingen annoncer fundet.</p>
+}
+else
+{
+    <div class="row">
+        @foreach (var a in annoncer)
+        {
+            <div class="col-4 mb-3">
+                <div class="card p-2">
+                    <img src="@a.FotoUrl" class="card-img-top" style="max-height: 180px; object-fit: cover;" />
+
+                    <h5>@a.Titel</h5>
+                    <p>@a.Beskrivelse</p>
+                    <p><b>Pris:</b> @a.Pris kr.</p>
+
+                    <button class="btn btn-success" @onclick="() => AnmodKoeb(a)">
+                        Anmod om køb
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(besked))
+{
+    <div class="alert alert-info mt-3">@besked</div>
+}
+
 @code {
-    
+    private List<Annonce> annoncer = new();
+    private string searchText = "";
+    private decimal? maxPris;
+    private string? besked;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await HentAktiveAnnoncer();
+    }
+
+    private async Task HentAktiveAnnoncer()
+    {
+        annoncer = await http.GetFromJsonAsync<List<Annonce>>("api/Annonce/active");
+        FilterLocal();
+    }
+
+    private void FilterLocal()
+    {
+        IEnumerable<Annonce> filtreret = annoncer;
+
+        if (!string.IsNullOrWhiteSpace(searchText))
+            filtreret = filtreret.Where(a => 
+                a.Titel.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                a.Beskrivelse.Contains(searchText, StringComparison.OrdinalIgnoreCase));
+
+        if (maxPris.HasValue)
+            filtreret = filtreret.Where(a => a.Pris <= maxPris.Value);
+
+        annoncer = filtreret.ToList();
+    }
+
+    private void FilterAnnoncer()
+    {
+        FilterLocal();
+    }
+
+    private async Task AnmodKoeb(Annonce a)
+    {
+        var køb = new Indkoeb
+        {
+            Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
+            annonceId = a.Id,
+            KoeberId = "test-bruger", // ← du kan senere sætte rigtig bruger-id
+            KøbsDato = DateTime.UtcNow
+        };
+
+        var resp = await http.PostAsJsonAsync("api/Indkoeb", køb);
+
+        if (resp.IsSuccessStatusCode)
+            besked = "Købsanmodning sendt!";
+        else
+            besked = "Fejl ved køb.";
+    }
 }

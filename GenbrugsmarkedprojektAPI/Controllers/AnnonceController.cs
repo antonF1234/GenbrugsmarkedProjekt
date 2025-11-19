@@ -2,18 +2,15 @@ using GenbrugsmarkedProjekt.Models;
 using GenbrugsmarkedProjekt.Repositories;     
 using Microsoft.AspNetCore.Mvc;
 
+
 namespace GenbrugsmarkedprojektAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
 public class AnnonceController : ControllerBase
 {
-    private readonly AnnonceRepo _repo;
+    private readonly AnnonceRepo _repo = new();
 
-    public AnnonceController()
-    {
-        _repo = new AnnonceRepo();
-    }
     [HttpGet("active")]
     public IActionResult GetActive()
     {
