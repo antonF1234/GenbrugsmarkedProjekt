@@ -1,6 +1,8 @@
 using GenbrugsmarkedProjekt.Components;
 using GenbrugsmarkedProjekt.Services;
 using Microsoft.AspNetCore.Components.Authorization;
+using Blazored.LocalStorage;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,8 +38,10 @@ builder.Services.AddHttpClient("Api", (sp, client) =>
 
 // Default HttpClient resolves to the named "Api" client
 builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("Api"));
+builder.Services.AddBlazoredLocalStorage();
 
 var app = builder.Build();
+
 
 if (!app.Environment.IsDevelopment())
 {

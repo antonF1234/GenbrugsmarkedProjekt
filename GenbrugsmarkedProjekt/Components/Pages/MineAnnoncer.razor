@@ -1,0 +1,133 @@
+﻿@page "/mineannoncer"
+@using System.Security.Claims
+@using GenbrugsmarkedProjekt.Models
+@using MongoDB.Bson
+@using Microsoft.AspNetCore.Components.Authorization
+@inject HttpClient http
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<h3>Opret Annonce</h3>
+
+<div class="card p-3" style="max-width: 600px;">
+    <EditForm Model="@nyAnnonce" OnValidSubmit="OpretAnnonce">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-2">
+            <label>Titel</label>
+            <InputText class="form-control" @bind-Value="nyAnnonce.Titel" />
+        </div>
+
+        <div class="mb-2">
+            <label>Beskrivelse</label>
+            <InputTextArea class="form-control" @bind-Value="nyAnnonce.Beskrivelse" />
+        </div>
+
+        <div class="mb-2">
+            <label>Pris</label>
+            <InputNumber class="form-control" @bind-Value="nyAnnonce.Pris" />
+        </div>
+
+        <div class="mb-2">
+            <label>Stand</label>
+            <InputText class="form-control" @bind-Value="nyAnnonce.Stand" />
+        </div>
+
+        <div class="mb-2">
+            <label>Størrelse</label>
+            <InputText class="form-control" @bind-Value="nyAnnonce.Str" />
+        </div>
+
+        <div class="mb-2">
+            <label>Foto URL</label>
+            <InputText class="form-control" @bind-Value="nyAnnonce.FotoUrl" />
+        </div>
+
+        <div class="mb-2">
+            <label>Lokalitet</label>
+            <InputText class="form-control" @bind-Value="nyAnnonce.Lokalitet" />
+        </div>
+
+        <div class="mb-2">
+            <label>Lokale</label>
+            <InputText class="form-control" @bind-Value="nyAnnonce.Lokale" />
+        </div>
+
+        <button class="btn btn-primary mt-2">Opret Annonce</button>
+    </EditForm>
+</div>
+
+@if (!string.IsNullOrEmpty(besked))
+{
+    <div class="alert alert-info mt-3">@besked</div>
+}
+
+@code {
+    private Annonce nyAnnonce = default!;
+    private string? besked;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await InitNyAnnonceAsync();
+    }
+
+    private async Task InitNyAnnonceAsync()
+    {
+        nyAnnonce = new Annonce
+        {
+            Id = ObjectId.GenerateNewId().ToString(),
+            Dato = DateTime.Now,
+            Status = "Aktiv"
+        };
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            nyAnnonce.BrugerNavn = user.Identity.Name ?? "";
+            nyAnnonce.BrugerEmail = user.FindFirst(ClaimTypes.Email)?.Value ?? "";
+
+            // Resolve BrugerId via API using the authenticated user's email
+            if (!string.IsNullOrWhiteSpace(nyAnnonce.BrugerEmail))
+            {
+                try
+                {
+                    var bruger = await http.GetFromJsonAsync<Brugere>($"api/Brugere/by-email?email={Uri.EscapeDataString(nyAnnonce.BrugerEmail)}");
+                    nyAnnonce.BrugerId = bruger?.BrugerId ?? 0;
+                }
+                catch
+                {
+                    nyAnnonce.BrugerId = 0;
+                }
+            }
+            else
+            {
+                nyAnnonce.BrugerId = 0;
+            }
+        }
+    }
+
+    private async Task OpretAnnonce()
+    {
+        try
+        {
+            var response = await http.PostAsJsonAsync("api/Annonce", nyAnnonce);
+
+            if (response.IsSuccessStatusCode)
+            {
+                besked = "Din annonce er oprettet!";
+                await InitNyAnnonceAsync(); // nulstil formen
+            }
+            else
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                besked = $"Fejl: {response.StatusCode} - {content}";
+            }
+        }
+        catch (Exception ex)
+        {
+            besked = $"Der skete en fejl: {ex.Message}";
+        }
+    }
+}

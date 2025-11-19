@@ -17,6 +17,8 @@ public class BrugereRepo
     //Get vores brugere
     public List<Brugere> GetAll()
     {   
+        // Auto-assign missing BrugerId values before returning
+        AssignMissingBrugerIds();
         return _brugere.Find(b => true).ToList();
     }
     
@@ -29,6 +31,10 @@ public class BrugereRepo
     //Opret brugere
     public Brugere Create(Brugere brugere)
     {
+        if (brugere.BrugerId <= 0)
+        {
+            brugere.BrugerId = GetNextBrugerId();
+        }
         _brugere.InsertOne(brugere);
         return brugere;
     }
@@ -44,6 +50,47 @@ public class BrugereRepo
     public Brugere? GetByEmail(string email)
     {
         return _brugere.Find(b => b.Email == email).FirstOrDefault();
+    }
+
+        // Ensure a user fetched by email has a non-zero BrugerId (updates and returns it)
+        public Brugere? EnsureBrugerIdForEmail(string email)
+        {
+            var bruger = GetByEmail(email);
+            if (bruger == null) return null;
+
+            if (bruger.BrugerId <= 0)
+            {
+                bruger.BrugerId = GetNextBrugerId();
+                _brugere.ReplaceOne(b => b.Id == bruger.Id, bruger);
+            }
+
+            return bruger;
+        }
+
+        // Ensure all users have a non-zero BrugerId (updates missing ones)
+        public int AssignMissingBrugerIds()
+        {
+            var missing = _brugere.Find(b => b.BrugerId <= 0).ToList();
+            var updated = 0;
+            foreach (var u in missing)
+            {
+                u.BrugerId = GetNextBrugerId();
+                _brugere.ReplaceOne(b => b.Id == u.Id, u);
+                updated++;
+            }
+            return updated;
+        }
+
+    // Generate next incremental BrugerId
+    public int GetNextBrugerId()
+    {
+        var last = _brugere
+            .Find(b => true)
+            .SortByDescending(b => b.BrugerId)
+            .Limit(1)
+            .FirstOrDefault();
+
+        return (last?.BrugerId ?? 0) + 1;
     }
 
     //Slet brugere

@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.JSInterop;
+﻿using Blazored.LocalStorage;
+using Microsoft.AspNetCore.Components.Authorization;
 using System.Security.Claims;
 using System.Text.Json;
 
@@ -7,50 +7,40 @@ namespace GenbrugsmarkedProjekt.Services;
 
 public class AutentificeringsTjeneste : AuthenticationStateProvider
 {
-    private readonly IJSRuntime _jsRuntime;
+    private readonly ILocalStorageService _localStorage;
+
     private ClaimsPrincipal _anonymBruger = new ClaimsPrincipal(new ClaimsIdentity());
 
-    public AutentificeringsTjeneste(IJSRuntime jsRuntime)
+    public AutentificeringsTjeneste(ILocalStorageService localStorage)
     {
-        _jsRuntime = jsRuntime;
+        _localStorage = localStorage;
     }
 
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
-        string brugerJson;
+        string brugerJson = null;
         try
         {
-            // Slet eventuelle gamle user nøgler for at rydde op
-            await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "user");
-
-            // Prøv at hente brugerdata fra localStorage
-            // Dette vil kaste en InvalidOperationException
-            brugerJson = await _jsRuntime.InvokeAsync<string>("localStorage.getItem", "bruger");
+            brugerJson = await _localStorage.GetItemAsStringAsync("bruger");
         }
         catch (InvalidOperationException)
         {
-            return await Task.FromResult(new AuthenticationState(_anonymBruger));
-        }
-        catch (Exception ex)
-        {
-            // Log andre undtagelser
-            Console.WriteLine($"Fejl ved hentning af bruger fra localStorage: {ex.Message}");
-            return await Task.FromResult(new AuthenticationState(_anonymBruger));
+            // This happens during prerendering when JavaScript interop is not available.
+            // Return an anonymous user state. The client-side will re-evaluate later.
+            return new AuthenticationState(_anonymBruger);
         }
 
         if (string.IsNullOrWhiteSpace(brugerJson))
         {
-            return await Task.FromResult(new AuthenticationState(_anonymBruger));
+            return new AuthenticationState(_anonymBruger);
         }
 
         try
         {
-            // Opret JsonSerializerOptions for at håndtere camelCase fra localStorage
-            var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-            var bruger = JsonSerializer.Deserialize<BrugerSession>(brugerJson, options);
+            var bruger = JsonSerializer.Deserialize<BrugerSession>(brugerJson);
             if (bruger == null || string.IsNullOrWhiteSpace(bruger.Id))
             {
-                return await Task.FromResult(new AuthenticationState(_anonymBruger));
+                return new AuthenticationState(_anonymBruger);
             }
 
             var claims = new[]
@@ -59,35 +49,42 @@ public class AutentificeringsTjeneste : AuthenticationStateProvider
                 new Claim(ClaimTypes.Name, bruger.Navn),
                 new Claim(ClaimTypes.Email, bruger.Email)
             };
+
             var identitet = new ClaimsIdentity(claims, "CustomAuth");
             var principal = new ClaimsPrincipal(identitet);
 
-            return await Task.FromResult(new AuthenticationState(principal));
+            return new AuthenticationState(principal);
         }
         catch
         {
-            // Ryd ugyldige data i local storage
-            await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "bruger");
-            return await Task.FromResult(new AuthenticationState(_anonymBruger));
+            await _localStorage.RemoveItemAsync("bruger");
+            return new AuthenticationState(_anonymBruger);
         }
     }
 
-    public void MeddelBrugerLoggetInd(BrugerSession bruger)
+    public async Task MeddelBrugerLoggetInd(BrugerSession bruger)
     {
+        await _localStorage.SetItemAsync("bruger", bruger);
+
         var claims = new[]
         {
             new Claim(ClaimTypes.NameIdentifier, bruger.Id),
             new Claim(ClaimTypes.Name, bruger.Navn),
             new Claim(ClaimTypes.Email, bruger.Email)
         };
+
         var identitet = new ClaimsIdentity(claims, "CustomAuth");
         var principal = new ClaimsPrincipal(identitet);
-        NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(principal)));
+
+        NotifyAuthenticationStateChanged(
+            Task.FromResult(new AuthenticationState(principal)));
     }
 
-    public void MeddelBrugerLoggetUd()
+    public async Task MeddelBrugerLoggetUd()
     {
-        NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(_anonymBruger)));
+        await _localStorage.RemoveItemAsync("bruger");
+        NotifyAuthenticationStateChanged(
+            Task.FromResult(new AuthenticationState(_anonymBruger)));
     }
 }
 
