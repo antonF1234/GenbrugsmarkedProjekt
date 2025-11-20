@@ -7,40 +7,40 @@
 
 <div class="row mb-3">
     <div class="col-4">
-        <input class="form-control" placeholder="Søg..." @bind="searchText" @bind:event="oninput" />
+        <input class="form-control" placeholder="Søg i titel eller beskrivelse..."
+               @bind="searchText" 
+               @bind:event="oninput" />   <!-- live søgning mens man skriver -->
     </div>
     <div class="col-4">
-        <input type="number" class="form-control" placeholder="Max pris" @bind="maxPris" />
+        <input type="number" class="form-control" placeholder="Max pris"
+               @bind="maxPris"
+               @bind:event="oninput" />   <!-- opdaterer med det samme -->
     </div>
     <div class="col-2">
-        <button class="btn btn-primary" @onclick="FilterAnnoncer">Filtrer</button>
+        <button class="btn btn-secondary" @onclick="ClearFilters">Ryd filtre</button>
     </div>
 </div>
 
-@if (annoncer == null)
+@if (alleAnnoncer == null)
 {
     <p>Henter annoncer...</p>
 }
-else if (annoncer.Count == 0)
+else if (!visAnnoncer.Any())
 {
-    <p>Ingen annoncer fundet.</p>
+    <p>Ingen annoncer matcher dine filtre.</p>
 }
 else
 {
     <div class="row">
-        @foreach (var a in annoncer)
+        @foreach (var a in visAnnoncer)
         {
             <div class="col-4 mb-3">
                 <div class="card p-2">
-                    <img src="@a.FotoUrl" class="card-img-top" style="max-height: 180px; object-fit: cover;" />
-
+                    <img src="@a.FotoUrl" class="card-img-top" style="max-height: 180px; object-fit: cover;" alt="Foto" />
                     <h5>@a.Titel</h5>
                     <p>@a.Beskrivelse</p>
                     <p><b>Pris:</b> @a.Pris kr.</p>
-
-                    <button class="btn btn-success" @onclick="() => AnmodKoeb(a)">
-                        Anmod om køb
-                    </button>
+                    <button class="btn btn-success" @onclick="() => AnmodKoeb(a)">Anmod om køb</button>
                 </div>
             </div>
         }
@@ -53,40 +53,45 @@ else
 }
 
 @code {
-    private List<Annonce> annoncer = new();
+    private List<Annonce> alleAnnoncer = new();   // ALLE aktive annoncer (ændres aldrig efter load)
+    private List<Annonce> visAnnoncer => FiltrerAnnoncer();  // beregnes automatisk!
+
     private string searchText = "";
     private decimal? maxPris;
+
     private string? besked;
 
     protected override async Task OnInitializedAsync()
     {
-        await HentAktiveAnnoncer();
+        alleAnnoncer = await http.GetFromJsonAsync<List<Annonce>>("api/Annonce/active") ?? new();
+        // visAnnoncer bliver automatisk = alleAnnoncer første gang
     }
 
-    private async Task HentAktiveAnnoncer()
+    // Denne metode kører AUTOMATISK hver gang searchText eller maxPris ændres
+    private List<Annonce> FiltrerAnnoncer()
     {
-        annoncer = await http.GetFromJsonAsync<List<Annonce>>("api/Annonce/active");
-        FilterLocal();
-    }
-
-    private void FilterLocal()
-    {
-        IEnumerable<Annonce> filtreret = annoncer;
+        var resultat = alleAnnoncer.AsEnumerable();
 
         if (!string.IsNullOrWhiteSpace(searchText))
-            filtreret = filtreret.Where(a => 
+        {
+            resultat = resultat.Where(a =>
                 a.Titel.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
                 a.Beskrivelse.Contains(searchText, StringComparison.OrdinalIgnoreCase));
+        }
 
         if (maxPris.HasValue)
-            filtreret = filtreret.Where(a => a.Pris <= maxPris.Value);
+        {
+            resultat = resultat.Where(a => a.Pris <= maxPris.Value);
+        }
 
-        annoncer = filtreret.ToList();
+        return resultat.ToList();
     }
 
-    private void FilterAnnoncer()
+    private void ClearFilters()
     {
-        FilterLocal();
+        searchText = "";
+        maxPris = null;
+        // Ingen StateHasChanged() nødvendigt – Blazor opdager det selv!
     }
 
     private async Task AnmodKoeb(Annonce a)
@@ -95,15 +100,13 @@ else
         {
             Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
             annonceId = a.Id,
-            KoeberId = "test-bruger", // ← du kan senere sætte rigtig bruger-id
+            KoeberId = "test-bruger",
             KøbsDato = DateTime.UtcNow
         };
 
         var resp = await http.PostAsJsonAsync("api/Indkoeb", køb);
-
-        if (resp.IsSuccessStatusCode)
-            besked = "Købsanmodning sendt!";
-        else
-            besked = "Fejl ved køb.";
+        besked = resp.IsSuccessStatusCode
+            ? "Købsanmodning sendt!"
+            : "Fejl – prøv igen.";
     }
 }

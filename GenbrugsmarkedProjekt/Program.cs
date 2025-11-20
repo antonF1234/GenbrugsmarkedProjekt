@@ -24,7 +24,7 @@ builder.Services.AddHttpClient("Api", (sp, client) =>
     // Fallback for development if not configured
     if (string.IsNullOrWhiteSpace(baseUrl))
     {
-        baseUrl = "http://localhost:5000";
+        baseUrl = "https://localhost:7234";   // <--- SKIFT TIL DEN PORT, JERES API FAKTISK KØRER PÅ!
     }
 
     // Ensure trailing slash to build relative URIs correctly
