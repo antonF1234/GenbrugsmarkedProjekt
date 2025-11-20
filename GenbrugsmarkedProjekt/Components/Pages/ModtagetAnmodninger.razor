@@ -22,20 +22,27 @@ else
         {
             var i = item.indkoeb;
             var a = item.annonce;
-
+        
             <div class="col-4 mb-3">
                 <div class="card p-2">
                     <img src="@a.FotoUrl"
                          class="card-img-top"
                          style="max-height: 180px; object-fit: cover;"/>
-
+                    @if (i.status == "Afvist")
+                    {
+                        <p2><b style="color: red">Status:</b> <span style="color: red">@i.status</span></p2>
+                    }
+                    else
+                    {
+                        <p2><b>Status:</b> <span style="color: green">@i.status</span></p2>
+                    }
                     <h5>@a.Titel</h5>
                     <p>@a.Beskrivelse</p>
                     <p><b>Pris:</b> @a.Pris kr.</p>
-                    <p><b>Status:</b> @i.status</p>
                     <p><b>Købsdato:</b> @i.KøbsDato.ToLocalTime()</p>
+                    
                     <button class="btn btn-danger mt-2" @onclick="() => AfvisAnmodning(i.Id)">Afvis anmodning</button>
-                    <button class="btn btn-danger mt-2" @onclick="() => AccepterAnmodning(i.Id)">Accepter anmodning</button>
+                    <button class="btn btn-outline-success mt-2" @onclick="() => AccepterAnmodning(i.Id)">Accepter anmodning</button>
                 </div>
             </div>
         }
@@ -81,17 +88,21 @@ else
 
         var alle = await Http.GetFromJsonAsync<List<Indkoeb>>("api/Indkoeb");
 
-        // find baseret på ObjectId
-        var mine = alle.Where(i => i.KoeberId == brugerId).ToList();
+        liste.Clear();
 
-        foreach (var i in mine)
+        foreach (var i in alle)
         {
             var annonce = await Http.GetFromJsonAsync<Annonce>($"api/Annonce/{i.annonceId}");
 
-            if (annonce != null)
+            // Kun indkoeb hvor annoncen tilhører den bruger som er logged ind
+            if (annonce != null && annonce.BrugerId == brugerId)
+            {
                 liste.Add((i, annonce));
+            }
         }
     }
+
+
     
     private async Task AccepterAnmodning(string indkoebId)
     {
@@ -129,7 +140,5 @@ else
 
         StateHasChanged();
     }
-
-
 
 }

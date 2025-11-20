@@ -32,7 +32,7 @@ public class indkoebController  : ControllerBase
     }
 
     [HttpPost]
-    public IActionResult Post([FromBody] Indkoeb indkoeb)
+    public IActionResult Post([FromBody] Indkoeb indkoeb)   
     {
         if (!ModelState.IsValid) 
             return BadRequest(ModelState);
@@ -85,5 +85,7 @@ public class indkoebController  : ControllerBase
     {
         public string status { get; set; }
     }
+    
+    
 
 }
