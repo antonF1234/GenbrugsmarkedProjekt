@@ -5,6 +5,8 @@
 @inject HttpClient http
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @using Microsoft.AspNetCore.Components.Authorization
+@using GenbrugsmarkedProjekt.Services
+@inject FileService fileService
 
 
 
@@ -40,10 +42,31 @@
             <InputText class="form-control" @bind-Value="nyAnnonce.Str" />
         </div>
 
-        <div class="mb-2">
-            <label>Foto URL</label>
-            <InputText class="form-control" @bind-Value="nyAnnonce.FotoUrl" />
+        <!-- ==== NY BILLEDUPLAD MED PREVIEW ==== -->
+        <div class="mb-3">
+            <label class="form-label fw-bold">Billede (anbefales!)</label>
+            <InputFile OnChange="UploadBillede" accept="image/*" class="form-control" />
+    
+            @if (!string.IsNullOrEmpty(uploadBesked))
+            {
+                <div class="alert @(uploadSuccess ? "alert-success" : "alert-danger") mt-2 small py-2">
+                    @uploadBesked
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(nyAnnonce.FotoUrl))
+            {
+                <div class="mt-3 text-center border p-3 bg-light rounded">
+                    <img src="@nyAnnonce.FotoUrl" class="img-thumbnail" style="max-height: 200px;" alt="Dit billede" />
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-sm btn-outline-danger" @onclick="FjernBillede">
+                            Fjern billede
+                        </button>
+                    </div>
+                </div>
+            }
         </div>
+        <!-- ==== SLUT PÅ BILLEDUPLAD ==== -->
 
         <div class="mb-2">
             <label>Lokalitet</label>
@@ -247,6 +270,8 @@ else
         if (response.IsSuccessStatusCode)
         {
             besked = "Din annonce er oprettet!";
+            uploadBesked = null;
+            nyAnnonce.FotoUrl = null;  // så man kan uploade nyt billede til næste annonce
             await InitNyAnnonceAsync();
             await LoadMineAnnoncerAsync();
         }
@@ -303,4 +328,45 @@ else
         "B1", "B2", "B3",
         "C1", "C2", "C3"
     };
+    private string? uploadBesked;
+    private bool uploadSuccess;
+
+// Upload billede
+    private async Task UploadBillede(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file.Size > 10_000_000) // 10 MB
+        {
+            uploadBesked = "Billedet er for stort (max 10 MB)";
+            uploadSuccess = false;
+            return;
+        }
+
+        uploadBesked = "Uploader billede...";
+        uploadSuccess = true;
+        StateHasChanged();
+
+        await using var stream = file.OpenReadStream(10_000_000);
+        var result = await fileService.SendFile(file.Name, stream);
+
+        if (result.success)
+        {
+            nyAnnonce.FotoUrl = fileService.ConvertToUrl(result.info);
+            uploadBesked = "Billede uploadet – ser godt ud!";
+            uploadSuccess = true;
+        }
+        else
+        {
+            uploadBesked = "Fejl ved upload: " + result.info;
+            uploadSuccess = false;
+        }
+    }
+
+// Fjern billede
+    private void FjernBillede()
+    {
+        nyAnnonce.FotoUrl = null;
+        uploadBesked = "Billede fjernet";
+        uploadSuccess = false;
+    }
 }

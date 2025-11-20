@@ -30,7 +30,7 @@ public class FileService
         return keys ?? new List<string>();
     }
 
-    public string ConvertToUrl(string key) => $"files/{key}";          // FJERNET /
+    public string ConvertToUrl(string key) => $"http://localhost:5000/files/{key}";
 
     public async Task<(bool success, string info)> DeleteFile(string filename)
     {
