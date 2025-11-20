@@ -52,7 +52,13 @@
 
         <div class="mb-2">
             <label>Lokale</label>
-            <InputText class="form-control" @bind-Value="nyAnnonce.Lokale" />
+            <InputSelect class="form-control" @bind-Value="nyAnnonce.Lokale">
+                <option value="">Vælg lokale</option>
+                @foreach (var l in lokaler)
+                {
+                    <option value="@l">@l</option>
+                }
+            </InputSelect>
         </div>
 
         <button class="btn btn-primary mt-2">Opret Annonce</button>
@@ -80,13 +86,15 @@ else
 {
     <table class="table table-sm table-bordered align-middle">
         <thead class="table-light">
-            <tr>
-                <th>Titel</th>
-                <th>Pris</th>
-                <th>Stand</th>
-                <th>Status</th>
-                <th style="width:1%;"></th>
-            </tr>
+        <tr>
+            <th>Titel</th>
+            <th>Pris</th>
+            <th>Stand</th>
+            <th>Lokalitet</th>
+            <th>Lokale</th>
+            <th>Status</th>
+            <th style="width:1%;"></th>
+        </tr>
         </thead>
         <tbody>
             @foreach (var a in mineAnnoncer)
@@ -122,6 +130,35 @@ else
                             @a.Stand
                         }
                     </td>
+
+                    <td>
+                        @if (redigerId == a.Id)
+                        {
+                            <InputText @bind-Value="temp!.Lokalitet" class="form-control form-control-sm" />
+                        }
+                        else
+                        {
+                            @a.Lokalitet
+                        }
+                    </td>
+
+                    <td>
+                        @if (redigerId == a.Id)
+                        {
+                            <InputSelect @bind-Value="temp!.Lokale" class="form-control form-control-sm">
+                                @foreach (var l in lokaler)
+                                {
+                                    <option value="@l">@l</option>
+                                }
+                            </InputSelect>
+                        }
+                        else
+                        {
+                            @a.Lokale
+                        }
+                    </td>
+
+                    <td>@a.Status</td>
                     <td>@a.Status</td>
                     <td class="text-end">
                         @if (redigerId == a.Id)
@@ -260,4 +297,10 @@ else
         await http.DeleteAsync($"api/Annonce/{id}");
         await LoadMineAnnoncerAsync();
     }
+    private List<string> lokaler = new()
+    {
+        "A1", "A2", "A3",
+        "B1", "B2", "B3",
+        "C1", "C2", "C3"
+    };
 }
