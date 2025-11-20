@@ -2,6 +2,8 @@
 @using GenbrugsmarkedProjekt.Models
 @inject HttpClient http
 @inject NavigationManager nav
+@inject IJSRuntime JS
+
 
 <h3>Marked</h3>
 
@@ -57,7 +59,7 @@ else
 
 @code {
     private List<Annonce> alleAnnoncer = new();   // ALLE aktive annoncer (ændres aldrig efter load)
-    private List<Annonce> visAnnoncer => FiltrerAnnoncer();  // beregnes automatisk!
+    private List<Annonce> visAnnoncer => FiltrerAnnoncer();  // beregnes automatisk :=)
 
     private string searchText = "";
     private decimal? maxPris;
@@ -94,22 +96,38 @@ else
     {
         searchText = "";
         maxPris = null;
-        // Ingen StateHasChanged() nødvendigt – Blazor opdager det selv!
+    }
+
+    private string? brugerId;
+
+    private async Task HentBrugerId()
+    {
+        var brugerJson = await JS.InvokeAsync<string>("localStorage.getItem", "bruger");
+
+        if (!string.IsNullOrEmpty(brugerJson))
+        {
+            var bruger = System.Text.Json.JsonSerializer.Deserialize<Brugere>(brugerJson);
+            brugerId = bruger?.Id;
+        }
     }
 
     private async Task AnmodKoeb(Annonce a)
     {
+        await HentBrugerId();
+
         var køb = new Indkoeb
         {
             Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
             annonceId = a.Id,
-            KoeberId = "test-bruger",
+            KoeberId = brugerId,
             KøbsDato = DateTime.UtcNow
         };
 
         var resp = await http.PostAsJsonAsync("api/Indkoeb", køb);
+
         besked = resp.IsSuccessStatusCode
             ? "Købsanmodning sendt!"
             : "Fejl – prøv igen.";
     }
+
 }
