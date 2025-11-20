@@ -2,9 +2,11 @@
 @using System.Security.Claims
 @using GenbrugsmarkedProjekt.Models
 @using GenbrugsmarkedProjekt.Repositories
-@using Microsoft.AspNetCore.Components.Authorization
 @inject HttpClient http
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@using Microsoft.AspNetCore.Components.Authorization
+
+
 
 <h3>Opret Annonce</h3>
 
@@ -62,13 +64,95 @@
     <div class="alert alert-info mt-3">@besked</div>
 }
 
+<hr />
+
+<h3>Dine annoncer</h3>
+
+@if (mineAnnoncer == null)
+{
+    <p>Henter dine annoncer...</p>
+}
+else if (!mineAnnoncer.Any())
+{
+    <p>Du har ingen annoncer endnu.</p>
+}
+else
+{
+    <table class="table table-sm table-bordered align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Titel</th>
+                <th>Pris</th>
+                <th>Stand</th>
+                <th>Status</th>
+                <th style="width:1%;"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var a in mineAnnoncer)
+            {
+                <tr>
+                    <td>
+                        @if (redigerId == a.Id)
+                        {
+                            <InputText @bind-Value="temp!.Titel" class="form-control form-control-sm" />
+                        }
+                        else
+                        {
+                            @a.Titel
+                        }
+                    </td>
+                    <td>
+                        @if (redigerId == a.Id)
+                        {
+                            <InputNumber @bind-Value="temp!.Pris" class="form-control form-control-sm" />
+                        }
+                        else
+                        {
+                            @a.Pris
+                        }
+                    </td>
+                    <td>
+                        @if (redigerId == a.Id)
+                        {
+                            <InputText @bind-Value="temp!.Stand" class="form-control form-control-sm" />
+                        }
+                        else
+                        {
+                            @a.Stand
+                        }
+                    </td>
+                    <td>@a.Status</td>
+                    <td class="text-end">
+                        @if (redigerId == a.Id)
+                        {
+                            <button class="btn btn-success btn-sm" @onclick="Gem">Gem</button>
+                            <button class="btn btn-secondary btn-sm ms-1" @onclick="Annuller">X</button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-outline-primary btn-sm" @onclick="() => StartRediger(a)">Rediger</button>
+                            <button class="btn btn-outline-danger btn-sm ms-1" @onclick="() => Slet(a.Id!)">Slet</button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
 @code {
     private Annonce nyAnnonce = new();
+    private List<Annonce>? mineAnnoncer;
     private string? besked;
+
+    private string? redigerId;
+    private Annonce? temp;
 
     protected override async Task OnInitializedAsync()
     {
         await InitNyAnnonceAsync();
+        await LoadMineAnnoncerAsync();
     }
 
     private async Task InitNyAnnonceAsync()
@@ -88,47 +172,92 @@
 
             if (!string.IsNullOrWhiteSpace(email))
             {
-                try
-                {
-                    // Hent MongoDB brugerobjekt via email
-                    var bruger = await http.GetFromJsonAsync<Brugere>(
-                        $"api/Brugere/by-email?email={Uri.EscapeDataString(email)}"
-                    );
+                var bruger = await http.GetFromJsonAsync<Brugere>(
+                    $"api/Brugere/by-email?email={Uri.EscapeDataString(email)}"
+                );
 
-                    if (bruger != null)
-                    {
-                        nyAnnonce.BrugerId = bruger.Id; // Mongo Id
-                    }
-                }
-                catch
-                {
-                    // Hvis API fejler, sæt ingenting
-                    nyAnnonce.BrugerId = "";
-                }
+                if (bruger != null)
+                    nyAnnonce.BrugerId = bruger.Id;
+            }
+        }
+    }
+
+    private async Task LoadMineAnnoncerAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var email = user.FindFirst(ClaimTypes.Email)?.Value;
+
+            var bruger = await http.GetFromJsonAsync<Brugere>(
+                $"api/Brugere/by-email?email={Uri.EscapeDataString(email)}"
+            );
+
+            if (bruger != null)
+            {
+                var alle = await http.GetFromJsonAsync<List<Annonce>>("api/Annonce");
+                mineAnnoncer = alle!.Where(a => a.BrugerId == bruger.Id).ToList();
             }
         }
     }
 
     private async Task OpretAnnonce()
     {
-        try
-        {
-            var response = await http.PostAsJsonAsync("api/Annonce", nyAnnonce);
+        var response = await http.PostAsJsonAsync("api/Annonce", nyAnnonce);
 
-            if (response.IsSuccessStatusCode)
-            {
-                besked = "Din annonce er oprettet!";
-                await InitNyAnnonceAsync(); // nulstil formen
-            }
-            else
-            {
-                var content = await response.Content.ReadAsStringAsync();
-                besked = $"Fejl: {response.StatusCode} - {content}";
-            }
-        }
-        catch (Exception ex)
+        if (response.IsSuccessStatusCode)
         {
-            besked = $"Der skete en fejl: {ex.Message}";
+            besked = "Din annonce er oprettet!";
+            await InitNyAnnonceAsync();
+            await LoadMineAnnoncerAsync();
         }
+        else
+        {
+            besked = "Fejl ved oprettelse af annonce.";
+        }
+    }
+
+    private void StartRediger(Annonce a)
+    {
+        redigerId = a.Id;
+
+        temp = new Annonce
+        {
+            Id = a.Id,
+            Titel = a.Titel,
+            Pris = a.Pris,
+            Stand = a.Stand,
+            Beskrivelse = a.Beskrivelse,
+            Str = a.Str,
+            FotoUrl = a.FotoUrl,
+            Lokalitet = a.Lokalitet,
+            Lokale = a.Lokale,
+            Status = a.Status,
+            BrugerId = a.BrugerId
+        };
+    }
+
+    private void Annuller()
+    {
+        redigerId = null;
+        temp = null;
+    }
+
+    private async Task Gem()
+    {
+        if (temp?.Id != null)
+        {
+            await http.PutAsJsonAsync($"api/Annonce/{temp.Id}", temp);
+            Annuller();
+            await LoadMineAnnoncerAsync();
+        }
+    }
+
+    private async Task Slet(string id)
+    {
+        await http.DeleteAsync($"api/Annonce/{id}");
+        await LoadMineAnnoncerAsync();
     }
 }
