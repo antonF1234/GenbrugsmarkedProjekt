@@ -1,0 +1,68 @@
+@page "/upload"
+@using GenbrugsmarkedProjekt.Services
+@inject FileService fileService
+
+<h3>Test af billedupload</h3>
+
+<InputFile OnChange="@UploadFile" accept="image/*" />
+<p><em>@statusMessage</em></p>
+
+@if (keys == null)
+{
+    <p>Henter eksisterende billeder...</p>
+}
+else if (!keys.Any())
+{
+    <p>Ingen billeder uploadet endnu.</p>
+}
+else
+{
+    <div class="row">
+        @foreach (var key in keys)
+        {
+            <div class="col-md-3 mb-3">
+                <img src="@fileService.ConvertToUrl(key)" 
+                     class="img-thumbnail" 
+                     style="width:200px; height:200px; object-fit:cover;" 
+                     alt="Uploadet billede" />
+                <br />
+                <small>@key</small>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private string statusMessage = "Klar til upload";
+    private List<string>? keys;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadKeys();
+    }
+
+    private async Task LoadKeys()
+    {
+        keys = await fileService.GetAllKeys();
+    }
+
+    private async Task UploadFile(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file.Size > 10_000_000)
+        {
+            statusMessage = "Billedet er for stort (max 10 MB)";
+            return;
+        }
+
+        await using var stream = file.OpenReadStream(10_000_000);
+
+        var result = await fileService.SendFile(file.Name, stream);
+
+        statusMessage = result.success
+            ? $"Upload lykkedes! Key: {result.info}"
+            : $"Upload fejlede: {result.info}";
+
+        await LoadKeys(); // opdater listen med det nye billede
+    }
+}

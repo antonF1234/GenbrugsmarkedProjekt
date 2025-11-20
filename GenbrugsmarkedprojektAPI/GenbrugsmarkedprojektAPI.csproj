@@ -15,6 +15,10 @@
       <ProjectReference Include="..\GenbrugsmarkedProjekt\GenbrugsmarkedProjekt.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="wwwroot\uploads\" />
+    </ItemGroup>
+
     <!-- Removed incorrect ProjectReference to GenbrugsmarkedProjekt -->
 
 </Project>
