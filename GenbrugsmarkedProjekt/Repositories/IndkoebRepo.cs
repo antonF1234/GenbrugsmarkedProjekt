@@ -45,8 +45,20 @@ public class IndkoebRepo
     {
         _indkoeb.DeleteOne(i => i.Id == id);
     }
-    public List<Indkoeb> GetByBuyer(string køberId)
+    public List<Indkoeb> GetByBuyer(string koeberId)
     {
-        return _indkoeb.Find(i => i.KoeberId == køberId).ToList();
+        return _indkoeb.Find(i => i.KoeberId == koeberId).ToList();
     }
+    
+    // status ændring ved anmodninger
+    public bool UpdateStatus(string id, string status)
+    {
+        var filter = Builders<Indkoeb>.Filter.Eq(i => i.Id, id);
+        var update = Builders<Indkoeb>.Update.Set(i => i.status, status);
+
+        var result = _indkoeb.UpdateOne(filter, update);
+
+        return result.ModifiedCount > 0;
+    }
+
 }

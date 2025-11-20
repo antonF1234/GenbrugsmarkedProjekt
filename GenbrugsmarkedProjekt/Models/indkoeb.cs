@@ -12,6 +12,6 @@ public class Indkoeb
     public string KoeberId { get; set; }
     public string annonceId { get; set; }
     
-    public string status { get; set; } = "Afventer";
+    public string status { get; set; } = "Afventer"; // som standard er anmodningen afventer
     public DateTime KøbsDato { get; set; } = DateTime.UtcNow;
 }

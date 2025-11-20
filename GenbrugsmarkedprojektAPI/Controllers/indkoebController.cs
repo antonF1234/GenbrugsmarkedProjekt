@@ -69,4 +69,21 @@ public class indkoebController  : ControllerBase
     {
         return Ok(_repo.GetByBuyer(KoeberId));
     }
+    
+    [HttpPatch("{id}/status")]
+    public IActionResult UpdateStatus(string id, [FromBody] StatusUpdateModel model)
+    {
+        var result = _repo.UpdateStatus(id, model.status);
+
+        if (!result)
+            return NotFound();
+
+        return Ok();
+    }
+
+    public class StatusUpdateModel
+    {
+        public string status { get; set; }
+    }
+
 }
