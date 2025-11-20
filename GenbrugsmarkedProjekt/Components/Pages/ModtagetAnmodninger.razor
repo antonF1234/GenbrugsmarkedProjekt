@@ -1,0 +1,135 @@
+﻿@page "/Modtagetanmodninger"
+@using GenbrugsmarkedProjekt.Models
+@inject IJSRuntime JS
+@inject HttpClient Http
+
+<h3>Modtaget anmodninger</h3>
+
+@if (!indlaest)
+{
+    <p>Henter...</p>
+}
+
+else if (liste.Count == 0)
+{
+    <p>Ingen anmodninger modtaget.</p>
+}
+
+else
+{
+    <div class="row">
+        @foreach (var item in liste)
+        {
+            var i = item.indkoeb;
+            var a = item.annonce;
+
+            <div class="col-4 mb-3">
+                <div class="card p-2">
+                    <img src="@a.FotoUrl"
+                         class="card-img-top"
+                         style="max-height: 180px; object-fit: cover;"/>
+
+                    <h5>@a.Titel</h5>
+                    <p>@a.Beskrivelse</p>
+                    <p><b>Pris:</b> @a.Pris kr.</p>
+                    <p><b>Status:</b> @i.status</p>
+                    <p><b>Købsdato:</b> @i.KøbsDato.ToLocalTime()</p>
+                    <button class="btn btn-danger mt-2" @onclick="() => AfvisAnmodning(i.Id)">Afvis anmodning</button>
+                    <button class="btn btn-danger mt-2" @onclick="() => AccepterAnmodning(i.Id)">Accepter anmodning</button>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private bool indlaest = false;
+
+    private string? brugerId;
+
+    private List<(Indkoeb indkoeb, Annonce annonce)> liste = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await HentBrugerId();
+            await HentMineIndkoeb();
+
+            indlaest = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HentBrugerId()
+    {
+        var brugerJson = await JS.InvokeAsync<string>("localStorage.getItem", "bruger");
+
+        if (!string.IsNullOrEmpty(brugerJson))
+        {
+            var bruger = System.Text.Json.JsonSerializer.Deserialize<Brugere>(brugerJson);
+
+            // Bruger MongoDB ObjectId (_id)
+            brugerId = bruger?.Id;
+        }
+    }
+
+    private async Task HentMineIndkoeb()
+    {
+        if (string.IsNullOrEmpty(brugerId))
+            return;
+
+        var alle = await Http.GetFromJsonAsync<List<Indkoeb>>("api/Indkoeb");
+
+        // find baseret på ObjectId
+        var mine = alle.Where(i => i.KoeberId == brugerId).ToList();
+
+        foreach (var i in mine)
+        {
+            var annonce = await Http.GetFromJsonAsync<Annonce>($"api/Annonce/{i.annonceId}");
+
+            if (annonce != null)
+                liste.Add((i, annonce));
+        }
+    }
+    
+    private async Task AccepterAnmodning(string indkoebId)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Patch, $"api/Indkoeb/{indkoebId}/status")
+        {
+            Content = JsonContent.Create(new { status = "Accepteret" })
+        };
+
+        await Http.SendAsync(request);
+
+        var index = liste.FindIndex(x => x.indkoeb.Id == indkoebId);
+        if (index >= 0)
+        {
+            liste[index].indkoeb.status = "Accepteret";
+        }
+
+        StateHasChanged();
+    }
+
+    
+    private async Task AfvisAnmodning(string indkoebId)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Patch, $"api/Indkoeb/{indkoebId}/status")
+        {
+            Content = JsonContent.Create(new { status = "Afvist" })
+        };
+
+        await Http.SendAsync(request);
+
+        var index = liste.FindIndex(x => x.indkoeb.Id == indkoebId);
+        if (index >= 0)
+        {
+            liste[index].indkoeb.status = "Afvist";
+        }
+
+        StateHasChanged();
+    }
+
+
+
+}

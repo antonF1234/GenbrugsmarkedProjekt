@@ -1,18 +1,18 @@
-﻿@page "/Anmodninger"
+﻿@page "/Sendteanmodninger"
 @using GenbrugsmarkedProjekt.Models
 @inject IJSRuntime JS
 @inject HttpClient Http
 
 <h3>Anmodninger</h3>
 
-@if (!isLoaded)
+@if (!indlaest)
 {
     <p>Henter...</p>
 }
 
 else if (liste.Count == 0)
 {
-    <p>Ingen anmodninger.</p>
+    <p>Ingen anmodninger sendt.</p>
 }
 
 else
@@ -42,7 +42,7 @@ else
 }
 
 @code {
-    private bool isLoaded = false;
+    private bool indlaest = false;
 
     private string? brugerId;
 
@@ -55,7 +55,7 @@ else
             await HentBrugerId();
             await HentMineIndkoeb();
 
-            isLoaded = true;
+            indlaest = true;
             StateHasChanged();
         }
     }
@@ -68,7 +68,7 @@ else
         {
             var bruger = System.Text.Json.JsonSerializer.Deserialize<Brugere>(brugerJson);
 
-            // Brug MongoDB ObjectId (_id)
+            // Bruger MongoDB ObjectId (_id)
             brugerId = bruger?.Id;
         }
     }
