@@ -22,7 +22,7 @@ else
         {
             var i = item.indkoeb;
             var a = item.annonce;
-
+        
             <div class="col-4 mb-3">
                 <div class="card p-2">
                     <img src="@a.FotoUrl"
@@ -88,17 +88,21 @@ else
 
         var alle = await Http.GetFromJsonAsync<List<Indkoeb>>("api/Indkoeb");
 
-        // find baseret på ObjectId
-        var mine = alle.Where(i => i.KoeberId == brugerId).ToList();
+        liste.Clear();
 
-        foreach (var i in mine)
+        foreach (var i in alle)
         {
             var annonce = await Http.GetFromJsonAsync<Annonce>($"api/Annonce/{i.annonceId}");
 
-            if (annonce != null)
+            // Kun indkoeb hvor annoncen tilhører den bruger som er logged ind
+            if (annonce != null && annonce.BrugerId == brugerId)
+            {
                 liste.Add((i, annonce));
+            }
         }
     }
+
+
     
     private async Task AccepterAnmodning(string indkoebId)
     {
