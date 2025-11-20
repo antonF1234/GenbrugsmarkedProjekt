@@ -28,14 +28,21 @@ else
                     <img src="@a.FotoUrl"
                          class="card-img-top"
                          style="max-height: 180px; object-fit: cover;"/>
-
+                    @if (i.status == "Afvist")
+                    {
+                        <p2><b style="color: red">Status:</b> <span style="color: red">@i.status</span></p2>
+                    }
+                    else
+                    {
+                        <p2><b>Status:</b> <span style="color: green">@i.status</span></p2>
+                    }
                     <h5>@a.Titel</h5>
                     <p>@a.Beskrivelse</p>
                     <p><b>Pris:</b> @a.Pris kr.</p>
-                    <p><b>Status:</b> @i.status</p>
                     <p><b>Købsdato:</b> @i.KøbsDato.ToLocalTime()</p>
+                    
                     <button class="btn btn-danger mt-2" @onclick="() => AfvisAnmodning(i.Id)">Afvis anmodning</button>
-                    <button class="btn btn-danger mt-2" @onclick="() => AccepterAnmodning(i.Id)">Accepter anmodning</button>
+                    <button class="btn btn-outline-success mt-2" @onclick="() => AccepterAnmodning(i.Id)">Accepter anmodning</button>
                 </div>
             </div>
         }
@@ -129,7 +136,5 @@ else
 
         StateHasChanged();
     }
-
-
 
 }
