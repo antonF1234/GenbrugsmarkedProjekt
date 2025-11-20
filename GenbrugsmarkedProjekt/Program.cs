@@ -13,6 +13,7 @@ builder.Services.AddRazorComponents()
 // Registrer AutentificeringsTjeneste
 builder.Services.AddScoped<AuthenticationStateProvider, AutentificeringsTjeneste>();
 builder.Services.AddAuthorizationCore(); // Nødvendig for autentificering/autorisering
+builder.Services.AddScoped<FileService, FileService>();
 
 // HttpClient
 // Optionally set ApiBaseUrl via configuration (e.g., environment variable "ApiBaseUrl")
@@ -24,7 +25,7 @@ builder.Services.AddHttpClient("Api", (sp, client) =>
     // Fallback for development if not configured
     if (string.IsNullOrWhiteSpace(baseUrl))
     {
-        baseUrl = "https://localhost:7234";   // <--- SKIFT TIL DEN PORT, JERES API FAKTISK KØRER PÅ!
+        baseUrl = "https://localhost:5000";   // <--- SKIFT TIL DEN PORT, JERES API FAKTISK KØRER PÅ!
     }
 
     // Ensure trailing slash to build relative URIs correctly
