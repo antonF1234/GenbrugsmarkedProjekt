@@ -7,7 +7,7 @@ namespace GenbrugsmarkedprojektAPI.Controllers;
 public class FileController : ControllerBase
 {
 
-    private string PATH = "";
+    private string PATH = ""; //comments
     // here files will be stored
 
     // provide fileupload - the file is copied to the PATH and given
