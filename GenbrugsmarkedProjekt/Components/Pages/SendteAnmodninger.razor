@@ -18,7 +18,7 @@ else if (liste.Count == 0)
 else
 {
     <div class="row">
-        @foreach (var item in liste)
+        @foreach (var item in liste)    // foreach loop til hvert annonce objekt
         {
             var i = item.indkoeb;
             var a = item.annonce;
@@ -48,19 +48,19 @@ else
 
     private List<(Indkoeb indkoeb, Annonce annonce)> liste = new();
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnAfterRenderAsync(bool firstRender)  // kører først når siden er indlæst
     {
         if (firstRender)
         {
-            await HentBrugerId();
-            await HentMineIndkoeb();
+            await HentBrugerId();   // kalder fukntionen
+            await HentMineIndkoeb();    // kalder funktionen
 
             indlaest = true;
             StateHasChanged();
         }
     }
 
-    private async Task HentBrugerId()
+    private async Task HentBrugerId()   // funktion til at hente bruger id fra localstorage i browseren
     {
         var brugerJson = await JS.InvokeAsync<string>("localStorage.getItem", "bruger");
 
@@ -73,7 +73,7 @@ else
         }
     }
 
-    private async Task HentMineIndkoeb()
+    private async Task HentMineIndkoeb()    // funktion til at hente alle ens anmodninger
     {
         if (string.IsNullOrEmpty(brugerId))
             return;
@@ -92,7 +92,7 @@ else
         }
     }
     
-    private async Task SletAnmodning(string indkoebId)
+    private async Task SletAnmodning(string indkoebId)  // slet en anmodninger vha. objekt id
     {
         await Http.DeleteAsync($"api/Indkoeb/{indkoebId}");
 
