@@ -16,23 +16,23 @@ public class indkoebController  : ControllerBase
     }
 
     [HttpGet]
-    public IActionResult Get()
+    public IActionResult Get()  // alle anmodninger/indkøb
     {
-        var indkoeb = _repo.GetAll();
-        return Ok(indkoeb);
+        var indkoeb = _repo.GetAll(); // hent liste af alle indkøb som er anmodninger
+        return Ok(indkoeb); // response 200 hvis det er ok
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("{id}")]   // hent specifikt anmodninger/indkøb vha. id
     public IActionResult GetById(string id)
     {
         var indkoeb =  _repo.GetById(id);
-        if (indkoeb == null) return NotFound();
+        if (indkoeb == null) return NotFound(); // status 404 hvis det ikke findes
         
         return Ok(indkoeb);
     }
 
     [HttpPost]
-    public IActionResult Post([FromBody] Indkoeb indkoeb)   
+    public IActionResult Post([FromBody] Indkoeb indkoeb)   // henter data fra body
     {
         if (!ModelState.IsValid) 
             return BadRequest(ModelState);
@@ -42,7 +42,7 @@ public class indkoebController  : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public IActionResult Update(string id, [FromBody] Indkoeb indkoeb)
+    public IActionResult Update(string id, [FromBody] Indkoeb indkoeb)  // opdaterer data fra body
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
@@ -55,7 +55,7 @@ public class indkoebController  : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public IActionResult Delete(string id)
+    public IActionResult Delete(string id)  // brug id til at slette
     {
         var indkoeb = _repo.GetById(id);
         if (indkoeb == null) return NotFound();
@@ -65,25 +65,25 @@ public class indkoebController  : ControllerBase
     }
     
     [HttpGet("mine")]
-    public IActionResult GetMine([FromQuery] string KoeberId)
+    public IActionResult GetMine([FromQuery] string KoeberId) // hent mine anmodninger
     {
         return Ok(_repo.GetByBuyer(KoeberId));
     }
     
     [HttpPatch("{id}/status")]
-    public IActionResult UpdateStatus(string id, [FromBody] StatusUpdateModel model)
+    public IActionResult UpdateStatus(string id, [FromBody] StatusUpdateModel model)    // opdater status
     {
         var result = _repo.UpdateStatus(id, model.status);
 
-        if (!result)
+        if (!result)    // hvis intet resultat så returner 404 not found
             return NotFound();
 
         return Ok();
     }
 
-    public class StatusUpdateModel
+    public class StatusUpdateModel  // lille model til at opdatere status
     {
-        public string status { get; set; }
+        public string status { get; set; }  // status string
     }
     
     
