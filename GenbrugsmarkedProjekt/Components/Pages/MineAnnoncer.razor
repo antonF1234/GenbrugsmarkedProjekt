@@ -10,7 +10,7 @@
 
 
 <h3>Opret Annonce</h3>
-
+<!--Oprettelse af ny annonce-->
 <div class="card p-3" style="max-width: 600px;">
     <EditForm Model="@nyAnnonce" OnValidSubmit="OpretAnnonce">
         <DataAnnotationsValidator />
@@ -52,7 +52,7 @@
                     @uploadBesked
                 </div>
             }
-
+            <!-- Hvis der er uploadet et billede, vis det + knap til at fjerne billede -->
             @if (!string.IsNullOrEmpty(nyAnnonce.FotoUrl))
             {
                 <div class="mt-3 text-center border p-3 bg-light rounded">
@@ -65,13 +65,13 @@
                 </div>
             }
         </div>
-        <!-- ==== SLUT PÅ BILLEDUPLAD ==== -->
 
         <div class="mb-2">
             <label>Lokalitet</label>
             <InputText class="form-control" @bind-Value="nyAnnonce.Lokalitet" />
         </div>
 
+        <!-- Lokalevalg fra hardcoded liste -->
         <div class="mb-2">
             <label>Lokale</label>
             <InputSelect class="form-control" @bind-Value="nyAnnonce.Lokale">
@@ -96,6 +96,7 @@
 
 <h3>Dine annoncer</h3>
 
+<!-- Liste over brugerens egne annoncer som kan redigeres og slettes -->
 @if (mineAnnoncer == null)
 {
     <p>Henter dine annoncer...</p>
@@ -208,12 +209,14 @@ else
     private string? redigerId;
     private Annonce? temp;
 
+    // Ved load af siden
     protected override async Task OnInitializedAsync()
     {
         await InitNyAnnonceAsync();
         await LoadMineAnnoncerAsync();
     }
 
+    // Sætter standardværdier og finder brugerens ID
     private async Task InitNyAnnonceAsync()
     {
         nyAnnonce = new Annonce
@@ -221,10 +224,10 @@ else
             Status = "Aktiv",
             Dato = DateTime.Now
         };
-
+        // Hent nuværende bruger
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
-
+        // Hvis brugeren er logget ind hentes bruger-id via email
         if (user.Identity?.IsAuthenticated == true)
         {
             var email = user.FindFirst(ClaimTypes.Email)?.Value;
@@ -241,6 +244,7 @@ else
         }
     }
 
+    // Loader alle annoncer for den nuværende bruger
     private async Task LoadMineAnnoncerAsync()
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
@@ -262,6 +266,7 @@ else
         }
     }
 
+    // Opretter annonce via API
     private async Task OpretAnnonce()
     {
         var response = await http.PostAsJsonAsync("api/Annonce", nyAnnonce);
@@ -280,6 +285,7 @@ else
         }
     }
 
+    // Starter redigering: kopierer værdier over i temp
     private void StartRediger(Annonce a)
     {
         redigerId = a.Id;
@@ -300,12 +306,14 @@ else
         };
     }
 
+    // Annullerer redigering
     private void Annuller()
     {
         redigerId = null;
         temp = null;
     }
 
+    // Gemmer opdateret annonce
     private async Task Gem()
     {
         if (temp?.Id != null)
@@ -316,11 +324,14 @@ else
         }
     }
 
+    // Sletter en annonce
     private async Task Slet(string id)
     {
         await http.DeleteAsync($"api/Annonce/{id}");
         await LoadMineAnnoncerAsync();
     }
+    
+    // Hardcoded liste med lokaler
     private List<string> lokaler = new()
     {
         "A1", "A2", "A3",
@@ -330,11 +341,11 @@ else
     private string? uploadBesked;
     private bool uploadSuccess;
 
-// Upload billede
+    // Håndtering af billedupload
     private async Task UploadBillede(InputFileChangeEventArgs e)
     {
         var file = e.File;
-        if (file.Size > 10_000_000) // 10 MB
+        if (file.Size > 10_000_000) // Tjek filstørrelse - her er den 10mb
         {
             uploadBesked = "Billedet er for stort (max 10 MB)";
             uploadSuccess = false;
@@ -345,6 +356,7 @@ else
         uploadSuccess = true;
         StateHasChanged();
 
+        // Upload via FileService
         await using var stream = file.OpenReadStream(10_000_000);
         var result = await fileService.SendFile(file.Name, stream);
 
@@ -361,7 +373,7 @@ else
         }
     }
 
-// Fjern billede
+    // Fjerner det valgte billede
     private void FjernBillede()
     {
         nyAnnonce.FotoUrl = null;
