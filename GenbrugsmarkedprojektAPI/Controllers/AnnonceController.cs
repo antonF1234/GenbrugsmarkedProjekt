@@ -6,25 +6,25 @@ using Microsoft.AspNetCore.Mvc;
 namespace GenbrugsmarkedprojektAPI.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/[controller]")] // route bliver til - api/controller
 public class AnnonceController : ControllerBase
 {
-    private readonly AnnonceRepo _repo = new();
+    private readonly AnnonceRepo _repo = new(); // repository pattern, henter og gemmer ting basicly
 
-    [HttpGet("active")]
+    [HttpGet("active")] // henter aktive annoncer - bruges på forside/marked
     public IActionResult GetActive()
     {
         return Ok(_repo.GetActive());
     }
     
-    [HttpGet]
+    [HttpGet] // henter alle annoncer
     public IActionResult GetAll()
     {
         var annonce = _repo.GetAll();
         return Ok(annonce);
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("{id}")] // henter en specifik annonce udfra mongoDB
     public IActionResult GetById(string id)
     {
         var annonce = _repo.GetById(id);
@@ -33,7 +33,7 @@ public class AnnonceController : ControllerBase
         return Ok(annonce);
     }
 
-    [HttpPost]
+    [HttpPost] // Opretter ny annonce – modtager JSON fra Blazor
     public IActionResult Create([FromBody] Annonce annonce)
     {
         if (!ModelState.IsValid)
@@ -43,7 +43,7 @@ public class AnnonceController : ControllerBase
         return Ok(created);
     }
 
-    [HttpPut("{id}")]
+    [HttpPut("{id}")] // Opdaterer en eksisterende annonce, bruges ved redigering)
     public IActionResult Update(string id, [FromBody] Annonce annonce)
     {
         if (!ModelState.IsValid)
@@ -56,7 +56,7 @@ public class AnnonceController : ControllerBase
         return Ok(annonce);
     }
 
-    [HttpDelete("{id}")]
+    [HttpDelete("{id}")] // sletter annonce permanent
     public IActionResult Delete(string id)
     {
         var annonce = _repo.GetById(id);
@@ -65,19 +65,19 @@ public class AnnonceController : ControllerBase
         _repo.Delete(id);
         return NoContent();
     }
-    //filtrer
+    //simpel filtrering 
     [HttpGet("filter")]
     public IActionResult Filter([FromQuery] decimal? minPris, [FromQuery] decimal? maxPris, [FromQuery] string? stand, [FromQuery] string? str)
     {
         return Ok(_repo.Filter(minPris, maxPris, stand, str));
     }
-    [HttpPost("{id}/request")]
+    [HttpPost("{id}/request")] // købsanmodning oprettes her
     public IActionResult RequestPurchase(string id, [FromQuery] string køberId)
     {
         var annonce = _repo.GetById(id);
         if (annonce == null) return NotFound();
 
-        _repo.RequestPurchase(id, køberId);
+        _repo.RequestPurchase(id, køberId); //Her sættes KoeberId på annoncen eller oprettes en Indkoeb
         return Ok();
     }
 

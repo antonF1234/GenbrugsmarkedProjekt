@@ -6,7 +6,7 @@
 
 
 <h3>Marked</h3>
-
+<!-- Søgefelter – live-opdatering uden reload -->
 <div class="row mb-3">
     <div class="col-4">
         <input class="form-control" placeholder="Søg i titel eller beskrivelse..."
@@ -22,8 +22,8 @@
         <button class="btn btn-secondary" @onclick="ClearFilters">Ryd filtre</button>
     </div>
 </div>
-
-@if (alleAnnoncer == null)
+<!-- Visning af annoncer -->
+@if (alleAnnoncer == null) 
 {
     <p>Henter annoncer...</p>
 }
@@ -31,7 +31,7 @@ else if (!visAnnoncer.Any())
 {
     <p>Ingen annoncer matcher dine filtre.</p>
 }
-else
+else //her får vi endelig vist noget i loopet her
 {
     <div class="row">
         @foreach (var a in visAnnoncer)
@@ -58,21 +58,21 @@ else
 }
 
 @code {
-    private List<Annonce> alleAnnoncer = new();   // ALLE aktive annoncer (ændres aldrig efter load)
-    private List<Annonce> visAnnoncer => FiltrerAnnoncer();  // beregnes automatisk :=)
+    private List<Annonce> alleAnnoncer = new();   // ALLE aktive annoncer hentes fra API
+    private List<Annonce> visAnnoncer => FiltrerAnnoncer();  // beregnes automatisk/bliver opdateret ved søgning eller pris :=)
 
     private string searchText = "";
     private decimal? maxPris;
 
     private string? besked;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync() // Henter alle aktive annoncer første gang siden loader
     {
         alleAnnoncer = await http.GetFromJsonAsync<List<Annonce>>("api/Annonce/active") ?? new();
         // visAnnoncer bliver automatisk = alleAnnoncer første gang
     }
 
-    // Denne metode kører AUTOMATISK hver gang searchText eller maxPris ændres
+    // Bliver kaldt automatisk hver gang searchText eller maxPris ændres
     private List<Annonce> FiltrerAnnoncer()
     {
         var resultat = alleAnnoncer.AsEnumerable();
@@ -92,7 +92,7 @@ else
         return resultat.ToList();
     }
 
-    private void ClearFilters()
+    private void ClearFilters() // Nulstiller søgning og pris-filter
     {
         searchText = "";
         maxPris = null;
@@ -100,7 +100,7 @@ else
 
     private string? brugerId;
 
-    private async Task HentBrugerId()
+    private async Task HentBrugerId() // Henter den loggede brugers ID fra localStorage (via JavaScript)
     {
         var brugerJson = await JS.InvokeAsync<string>("localStorage.getItem", "bruger");
 
@@ -111,7 +111,7 @@ else
         }
     }
 
-    private async Task AnmodKoeb(Annonce a)
+    private async Task AnmodKoeb(Annonce a) // Sender købsanmodning til API’et
     {
         await HentBrugerId();
 

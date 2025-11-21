@@ -5,7 +5,7 @@ namespace GenbrugsmarkedProjekt.Repositories;
 
 public class AnnonceRepo
 {
-    private readonly IMongoCollection<Annonce> _annonce;
+    private readonly IMongoCollection<Annonce> _annonce; //forbindelse til mongoDB
 
     public AnnonceRepo()
     {
@@ -15,37 +15,38 @@ public class AnnonceRepo
     }
     
     
-    public List<Annonce> GetActive()
+    public List<Annonce> GetActive() //marked side, henter kun aktive annoncer
     {
         return _annonce.Find(a => a.Status == "Aktiv").ToList();
     }
 
-    public List<Annonce> GetAll()
+    public List<Annonce> GetAll() //henter alle annoncer uanset status, under mine annoncer
     {
         return _annonce.Find(a => true).ToList();
     }
     
-    public Annonce? GetById(string id)
+    public Annonce? GetById(string id) //henter annonce ud fra mongodb id
     {
         return _annonce.Find(a => a.Id == id).FirstOrDefault();
     }
 
-    public Annonce Create(Annonce annonce)
+    public Annonce Create(Annonce annonce) //sætter ny annonce i databasen
     {
         _annonce.InsertOne(annonce);
         return annonce;
     }
 
-    public void Update(string id, Annonce updated)
+    public void Update(string id, Annonce updated) // Erstatter en eksisterende annonce med nye værdier
     {
         _annonce.ReplaceOne(a => a.Id == id, updated);
     }
 
-    public void Delete(string id)
+    public void Delete(string id) // slet
     {
         _annonce.DeleteOne(a => a.Id == id);
     }
 
+    // Filtrering efter pris og stand 
     public List<Annonce> Filter(decimal? minPris, decimal? maxPris, string? stand, string? str)
     {
         var filter = Builders<Annonce>.Filter.Empty;
@@ -65,7 +66,7 @@ public class AnnonceRepo
         return _annonce.Find(filter).ToList();
     }
 
-    public List<Annonce> Search(string text)
+    public List<Annonce> Search(string text) // Tekstsøgning i titel og beskrivelse
     {
         text = text.ToLower();
 
@@ -75,7 +76,7 @@ public class AnnonceRepo
         ).ToList();
     }
 
-    public void RequestPurchase(string annonceId, string køberId)
+    public void RequestPurchase(string annonceId, string køberId) //"Anmod om køb"
     {
         var annonce = GetById(annonceId);
         if (annonce == null) return;
